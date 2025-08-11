@@ -6,34 +6,23 @@ import SwiftSyntaxMacros
 
 public struct RStringMacro: ExpressionMacro {
     public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> SwiftSyntax.ExprSyntax {
-        guard let arg = node.arguments.first?.expression else {
-            throw MacroError.message("Missing string key")
+        // 验证参数格式
+        guard let identifier = node.arguments.first?.expression.as(DeclReferenceExprSyntax.self) else {
+            fatalError("宏参数必须是标识符（非字符串）")
         }
-        // 去掉多余空格和换行
-        let name = arg.description.trimmingCharacters(in: .whitespacesAndNewlines)
-        // 如果是 "xxx" 形式，去掉引号
-        let cleanedName = name.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-        return "R.string.localizable.\(raw: cleanedName)"
+        // 生成 R.string.localizable.xxx 表达式
+        return "R.string.localizable.\(raw: identifier.baseName.text)"
     }
 }
 
 public struct RImageMacro: ExpressionMacro {
     public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> SwiftSyntax.ExprSyntax {
-        guard let arg = node.arguments.first?.expression else {
-            throw MacroError.message("Missing image name")
+        // 验证参数格式
+        guard let identifier = node.arguments.first?.expression.as(DeclReferenceExprSyntax.self) else {
+            fatalError("宏参数必须是标识符（非字符串）")
         }
-        let name = arg.description.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cleanedName = name.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-        return "R.image.\(raw: cleanedName)"
-    }
-}
-
-enum MacroError: Error, CustomStringConvertible {
-    case message(String)
-    var description: String {
-        switch self {
-        case .message(let msg): return msg
-        }
+        // 生成 R.image.xxx 表达式
+        return "R.image.\(raw: identifier.baseName.text)"
     }
 }
 

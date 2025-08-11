@@ -3,31 +3,39 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// Implementation of the `stringify` macro, which takes an expression
-/// of any type and produces a tuple containing the value of that expression
-/// and the source code that produced the value. For example
-///
-///     #stringify(x + y)
-///
-///  will expand to
-///
-///     (x + y, "x + y")
-public struct StringifyMacro: ExpressionMacro {
-    public static func expansion(
-        of node: some FreestandingMacroExpansionSyntax,
-        in context: some MacroExpansionContext
-    ) -> ExprSyntax {
+public struct RStringMacro: ExpressionMacro {
+    public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> SwiftSyntax.ExprSyntax {
         guard let argument = node.arguments.first?.expression else {
-            fatalError("compiler bug: the macro does not have any arguments")
+            throw CustomError.message("Missing string key")
         }
-
-        return "(\(argument), \(literal: argument.description))"
+        return ExprSyntax("R.string.localizable.\(argument)")
     }
 }
+
+public struct RImageMacro: ExpressionMacro {
+    public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> SwiftSyntax.ExprSyntax {
+        guard let argument = node.arguments.first?.expression else {
+            throw CustomError.message("Missing image name")
+        }
+        return ExprSyntax("R.image.\(argument)")
+    }
+}
+
+enum CustomError: Error, CustomStringConvertible {
+    case message(String)
+    var description: String {
+        switch self {
+            case .message(let msg):
+                return msg
+        }
+    }
+}
+
 
 @main
 struct RSwiftResourcesPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
-        StringifyMacro.self,
+        RImageMacro.self,
+        RStringMacro.self
     ]
 }
